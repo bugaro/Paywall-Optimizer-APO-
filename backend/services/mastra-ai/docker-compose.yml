@@ -1,0 +1,90 @@
+services:
+  apo-mastra-ai:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apo-mastra-ai
+    ports:
+      - "4006:4006"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: "postgres://${MASTRA_DB_USER:-postgres}:${MASTRA_DB_PASSWORD:-password}@apo-mastra-db:5432/${MASTRA_DB_NAME:-mastra_memory}"
+      PORT: "4006"
+      OLLAMA_URL: "http://ollama:11434"
+      LLM_TIMEOUT_MS: "30000"
+      NODE_ENV: production
+      LOG_LEVEL: info
+    depends_on:
+      apo-mastra-db:
+        condition: service_healthy
+      ollama:
+        condition: service_started
+
+  apo-mastra-db:
+    image: ankane/pgvector:v0.5.1
+    container_name: apo-mastra-db
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_DB: ${MASTRA_DB_NAME:-mastra_memory}
+      POSTGRES_USER: ${MASTRA_DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${MASTRA_DB_PASSWORD:-password}
+    volumes:
+      - apo-mastra-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${MASTRA_DB_USER:-postgres} -d ${MASTRA_DB_NAME:-mastra_memory}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  ollama:
+    image: ollama/ollama:0.30.10
+    container_name: apo-ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - apo-ollama-models:/root/.ollama
+    restart: unless-stopped
+
+  # One-shot init container: pulls qwen2.5:3b + all-minilm on first boot then exits
+  ollama-init:
+    image: ollama/ollama:0.30.10
+    container_name: apo-ollama-init
+    depends_on:
+      - ollama
+    environment:
+      OLLAMA_HOST: http://ollama:11434
+    entrypoint: >
+      /bin/sh -c "
+        echo 'Waiting for Ollama to be ready...';
+        until ollama list > /dev/null 2>&1; do sleep 2; done;
+        echo 'Pulling qwen2.5:3b...';
+        ollama pull qwen2.5:3b;
+        echo 'Pulling all-minilm...';
+        ollama pull all-minilm;
+        echo 'Models ready.';
+      "
+    restart: "no"
+  drizzle-studio-mastra:
+    image: node:24-alpine
+    container_name: apo-drizzle-studio-mastra
+    user: root
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "4984:4984"
+    command:
+      - sh
+      - -c
+      - "npm rebuild esbuild 2>/dev/null && ./node_modules/.bin/drizzle-kit studio --port 4984 --host 0.0.0.0 --verbose"
+    environment:
+      DATABASE_URL: "postgres://postgres:password@apo-mastra-db:5432/mastra_memory"
+    depends_on:
+      apo-mastra-db:
+        condition: service_healthy
+
+volumes:
+  apo-mastra-db-data:
+  apo-ollama-models:

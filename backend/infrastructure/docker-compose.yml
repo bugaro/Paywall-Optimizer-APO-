@@ -1,0 +1,89 @@
+name: apo
+
+services:
+  dependency-check:
+    image: node:24-alpine
+    container_name: apo-dependency-check
+    volumes:
+      - ../../:/workspace
+    working_dir: /workspace
+    command:
+      - sh
+      - -c
+      - |
+        echo "=== Bootstrapping & Checking Dependencies ==="
+        # Copy env files if missing
+        if [ ! -f backend/.env ]; then
+          cp backend/.env.example backend/.env
+          echo "Created backend/.env"
+        fi
+        for svc in telemetry-analytics copilot-bridge mastra-ai; do
+          if [ ! -f backend/services/$$svc/.env ]; then
+            cp backend/services/$$svc/.env.example backend/services/$$svc/.env
+            echo "Created backend/services/$$svc/.env"
+          fi
+        done
+        
+        # Check and install dependencies
+        NEEDS_INSTALL=false
+        SERVICES="backend/services/telemetry-analytics backend/services/copilot-bridge backend/services/mastra-ai frontend"
+        for dir in $$SERVICES; do
+          if [ ! -d "$$dir/node_modules" ]; then
+            NEEDS_INSTALL=true
+            break
+          fi
+        done
+        
+        if [ "$$NEEDS_INSTALL" = true ]; then
+          echo "Dependencies are missing. Installing..."
+          for dir in $$SERVICES; do
+            if [ ! -d "$$dir/node_modules" ]; then
+              echo "Installing in $$dir..."
+              cd "/workspace/$$dir" && npm install
+            else
+              echo "$$dir/node_modules already exists. Skipping."
+            fi
+          done
+        else
+          echo "All dependencies already installed."
+        fi
+        echo "=== Bootstrapping Completed ==="
+
+  # Extend included services to depend on the bootstrapping service
+  apo-telemetry-analytics:
+    depends_on:
+      dependency-check:
+        condition: service_completed_successfully
+
+  copilot-bridge:
+    depends_on:
+      dependency-check:
+        condition: service_completed_successfully
+
+  apo-mastra-ai:
+    depends_on:
+      dependency-check:
+        condition: service_completed_successfully
+
+  frontend:
+    depends_on:
+      dependency-check:
+        condition: service_completed_successfully
+
+  drizzle-studio-telemetry:
+    depends_on:
+      dependency-check:
+        condition: service_completed_successfully
+
+  drizzle-studio-mastra:
+    depends_on:
+      dependency-check:
+        condition: service_completed_successfully
+
+include:
+  - path: ./docker-compose.observability.yml
+  - path: ../services/telemetry-analytics/docker-compose.yml
+  - path: ../services/copilot-bridge/docker-compose.yml
+  - path: ../services/mastra-ai/docker-compose.yml
+  - path: ../../frontend/docker-compose.yml
+

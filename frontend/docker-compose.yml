@@ -1,0 +1,13 @@
+services:
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apo-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      apo-telemetry-analytics:
+        condition: service_started
+      copilot-bridge:
+        condition: service_started

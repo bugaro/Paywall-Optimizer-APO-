@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>APO | Fleet Analytics Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-container": "#818cff",
+                        "error-container": "#ffdad6",
+                        "outline": "#767684",
+                        "tertiary-fixed": "#dce4e8",
+                        "surface-dim": "#d9dadc",
+                        "surface-tint": "#4752c2",
+                        "on-surface-variant": "#454653",
+                        "primary": "#4752c2",
+                        "inverse-surface": "#2e3132",
+                        "on-tertiary": "#ffffff",
+                        "surface": "#f8f9fb",
+                        "surface-bright": "#f8f9fb",
+                        "secondary-container": "#dedcff",
+                        "glass-border": "rgba(255, 255, 255, 0.4)",
+                        "secondary": "#5c5c79",
+                        "secondary-fixed": "#e1e0ff",
+                        "inverse-on-surface": "#f0f1f3",
+                        "on-secondary-container": "#60607d",
+                        "on-primary-fixed-variant": "#2d38a9",
+                        "error": "#ba1a1a",
+                        "on-surface": "#191c1e",
+                        "agent-surface": "rgba(255, 255, 255, 0.7)",
+                        "primary-fixed": "#e0e0ff",
+                        "on-secondary": "#ffffff",
+                        "success-emerald": "#10B981",
+                        "surface-container-low": "#f3f4f6",
+                        "surface-container-lowest": "#ffffff",
+                        "on-error": "#ffffff",
+                        "on-tertiary-fixed": "#151d20",
+                        "primary-fixed-dim": "#bdc2ff",
+                        "tertiary-fixed-dim": "#c0c8cc",
+                        "on-secondary-fixed": "#181932",
+                        "on-tertiary-container": "#283033",
+                        "on-secondary-fixed-variant": "#444460",
+                        "surface-variant": "#e1e2e4",
+                        "on-tertiary-fixed-variant": "#40484b",
+                        "surface-container-high": "#e7e8ea",
+                        "surface-container-highest": "#e1e2e4",
+                        "on-primary": "#ffffff",
+                        "active-gradient": "linear-gradient(135deg, #818CFF 0%, #6366F1 100%)",
+                        "tertiary": "#586063",
+                        "on-background": "#191c1e",
+                        "inverse-primary": "#bdc2ff",
+                        "outline-variant": "#c6c5d5",
+                        "on-primary-container": "#0d1892",
+                        "secondary-fixed-dim": "#c4c3e5",
+                        "surface-container": "#edeef0",
+                        "tertiary-container": "#90989c",
+                        "on-primary-fixed": "#000668",
+                        "background": "#f8f9fb",
+                        "on-error-container": "#93000a"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "sidebar-width": "400px",
+                        "unit": "4px",
+                        "margin-mobile": "16px",
+                        "container-max": "1440px",
+                        "margin-desktop": "40px",
+                        "gutter": "24px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-lg": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "caption": ["Plus Jakarta Sans"],
+                        "headline-md": ["Plus Jakarta Sans"],
+                        "label-mono": ["JetBrains Mono"],
+                        "display-lg": ["Plus Jakarta Sans"],
+                        "body-sm": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "700"}],
+                        "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                        "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.01em", "fontWeight": "700"}],
+                        "caption": ["12px", {"lineHeight": "16px", "fontWeight": "500"}],
+                        "headline-md": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                        "label-mono": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                        "display-lg": ["48px", {"lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "800"}],
+                        "body-sm": ["14px", {"lineHeight": "20px", "fontWeight": "400"}]
+                    }
+                },
+            },
+        }
+    </script>
+<style>
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .glass-panel {
+            backdrop-filter: blur(12px);
+            background: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+        .agentic-glow {
+            box-shadow: 0px 10px 30px rgba(129, 140, 255, 0.15);
+        }
+        .shimmer-btn {
+            background: linear-gradient(135deg, #818CFF 0%, #6366F1 100%);
+            position: relative;
+            overflow: hidden;
+        }
+        .shimmer-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255,255,255,0.2), transparent);
+            transform: rotate(45deg);
+            animation: shimmer 3s infinite;
+        }
+        @keyframes shimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+        .custom-scroll::-webkit-scrollbar { width: 4px; }
+        .custom-scroll::-webkit-scrollbar-track { background: transparent; }
+        .custom-scroll::-webkit-scrollbar-thumb { background: #e1e2e4; border-radius: 10px; }
+    </style>
+</head>
+<body class="bg-background text-on-surface overflow-hidden">
+<!-- Top Navigation Bar -->
+<header class="fixed top-0 left-0 right-0 z-30 bg-surface border-b border-outline-variant">
+<div class="flex justify-between items-center w-full px-6 h-16 max-w-container-max mx-auto">
+<div class="flex items-center gap-8">
+<span class="text-headline-md font-display-lg font-bold text-primary">APO</span>
+<nav class="hidden md:flex gap-6">
+<a class="text-primary border-b-2 border-primary font-bold px-1 py-4 text-body-sm font-body-sm transition-colors" href="#">Fleet Overview</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium px-1 py-4 text-body-sm font-body-sm" href="#">Cohorts</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium px-1 py-4 text-body-sm font-body-sm" href="#">Experiment History</a>
+<a class="text-on-surface-variant hover:bg-surface-container-low transition-colors font-medium px-1 py-4 text-body-sm font-body-sm" href="#">Memory Bank</a>
+</nav>
+</div>
+<div class="flex items-center gap-4">
+<div class="flex items-center gap-2 px-3 py-1 bg-success-emerald/10 text-success-emerald rounded-full border border-success-emerald/20">
+<div class="w-2 h-2 rounded-full bg-success-emerald animate-pulse"></div>
+<span class="text-label-mono font-label-mono">System Health: Stable</span>
+</div>
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 rounded-full hover:bg-surface-container-low text-on-surface-variant transition-colors">
+<span class="material-symbols-outlined">apps</span>
+</button>
+<div class="w-8 h-8 rounded-full overflow-hidden border border-outline-variant">
+<img alt="User Profile" class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCXk2PRmSCLHbxRZ_tbkRTu9NaZHjkH1LOiwLMK7tTvNzw-eeKf11uFXJE2tHS6qvDsQfyQQSdDN8QPH0ZuyZ9cPUBwjxlrcnzgB3JsnKunr7ipkdvFFdrTNpQoYy0LEzzFmE61F-A_YrdajYTa3EJ5bguklCHbjvYZY2Ox8BnpukReJnMfoac3NNOcZdaY-_c_JUs-V12jUnBTyD7BwNkTdD1Mmeq7yXC1pV7nXdTZiQh0KwirrPDVmPqmXh9_Ah3873SkHdanRkE"/>
+</div>
+</div>
+</div>
+</div>
+</header>
+<!-- Side Navigation -->
+<aside class="fixed left-0 top-0 h-full w-20 bg-surface-container-lowest border-r border-outline-variant flex flex-col items-center py-20 z-40">
+<div class="flex flex-col gap-8 flex-1">
+<button class="w-12 h-12 flex items-center justify-center bg-primary-container text-on-primary-container rounded-xl transition-all scale-105">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">dashboard_customize</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">group</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">biotech</span>
+</button>
+<button class="w-12 h-12 flex items-center justify-center text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">database</span>
+</button>
+</div>
+<div class="flex flex-col gap-4 mb-4">
+<button class="w-10 h-10 flex items-center justify-center text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<button class="w-10 h-10 flex items-center justify-center text-secondary hover:text-primary transition-all">
+<span class="material-symbols-outlined">help</span>
+</button>
+</div>
+</aside>
+<!-- Main Content Canvas -->
+<main class="ml-20 mr-sidebar-width pt-24 px-8 h-screen overflow-y-auto custom-scroll">
+<div class="max-w-6xl mx-auto space-y-8 pb-12">
+<!-- Multi-App Contextual Cards (Bento Style) -->
+<section class="grid grid-cols-12 gap-gutter">
+<!-- App A (Calendar) - Now with App B style but Healthy -->
+<div class="col-span-12 lg:col-span-6 bg-surface-container-lowest p-6 rounded-xl border border-success-emerald/20 flex flex-col relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<span class="material-symbols-outlined text-success-emerald">check_circle</span>
+</div>
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-secondary-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-on-secondary-container">calendar_today</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md">App A (Calendar)</h3>
+<span class="text-caption text-success-emerald font-semibold">STABLE: Operating within parameters</span>
+</div>
+</div>
+<div class="text-right">
+<div class="text-headline-md font-bold text-success-emerald">3.5%</div>
+<div class="text-caption text-on-surface-variant">Target: &gt; 3.0%</div>
+</div>
+</div>
+<div class="flex-1 h-32 w-full relative mb-4">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 400 100">
+<path d="M0,80 Q100,75 150,60 T250,55 T350,40 T400,30" fill="none" stroke="#10B981" stroke-linecap="round" stroke-width="3"></path>
+<circle cx="400" cy="30" fill="#10B981" r="5"></circle>
+<defs>
+<lineargradient id="success-grad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#10B981" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#10B981" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,80 Q100,75 150,60 T250,55 T350,40 T400,30 L400,100 L0,100 Z" fill="url(#success-grad)"></path>
+</svg>
+<div class="absolute top-1/4 left-1/4 -translate-x-1/2 bg-success-emerald text-white text-[10px] px-2 py-0.5 rounded-full font-bold">HEALTHY GROWTH</div>
+</div>
+<div class="flex items-center justify-between text-body-sm text-on-surface-variant border-t border-outline-variant pt-4">
+<span>Asset ID: CAL-402</span>
+<button class="text-primary font-bold hover:underline flex items-center gap-1">
+                        Full Analysis <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+<!-- App B (Fitness) - CRITICAL ALERT -->
+<div class="col-span-12 lg:col-span-6 bg-surface-container-lowest p-6 rounded-xl border-2 border-error/20 flex flex-col relative overflow-hidden">
+<div class="absolute top-0 right-0 p-3">
+<span class="material-symbols-outlined text-error animate-pulse">warning</span>
+</div>
+<div class="flex justify-between items-center mb-6">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-error-container rounded-lg flex items-center justify-center">
+<span class="material-symbols-outlined text-error">fitness_center</span>
+</div>
+<div>
+<h3 class="font-headline-md text-headline-md">App B (Fitness)</h3>
+<span class="text-caption text-error font-semibold">CRITICAL ALERT: Threshold Breached</span>
+</div>
+</div>
+<div class="text-right">
+<div class="text-headline-md font-bold text-error">1.8%</div>
+<div class="text-caption text-on-surface-variant">Target: &gt; 3.0%</div>
+</div>
+</div>
+<div class="flex-1 h-32 w-full relative mb-4">
+<svg class="w-full h-full overflow-visible" preserveaspectratio="none" viewbox="0 0 400 100">
+<path d="M0,20 Q50,15 100,25 T200,30 T300,45 T400,90" fill="none" stroke="#ba1a1a" stroke-linecap="round" stroke-width="3"></path>
+<circle cx="400" cy="90" fill="#ba1a1a" r="5"></circle>
+<defs>
+<lineargradient id="error-grad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#ba1a1a" stop-opacity="0.2"></stop>
+<stop offset="100%" stop-color="#ba1a1a" stop-opacity="0"></stop>
+</lineargradient>
+</defs>
+<path d="M0,20 Q50,15 100,25 T200,30 T300,45 T400,90 L400,100 L0,100 Z" fill="url(#error-grad)"></path>
+</svg>
+<div class="absolute top-1/2 left-3/4 -translate-x-1/2 bg-error text-white text-[10px] px-2 py-0.5 rounded-full font-bold">SHARP DIP DETECTED</div>
+</div>
+<div class="flex items-center justify-between text-body-sm text-on-surface-variant border-t border-outline-variant pt-4">
+<span>Last change: 12 minutes ago</span>
+<button class="text-primary font-bold hover:underline flex items-center gap-1">
+                        Full Analysis <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Copilot Sidebar (Gemma Integration) - WIDER -->
+<aside class="fixed right-0 top-0 h-full w-sidebar-width bg-agent-surface glass-panel border-l border-glass-border shadow-[-10px_0_30px_rgba(129,140,255,0.1)] z-50 flex flex-col p-6">
+<div class="flex items-center gap-3 mb-8">
+<div class="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white shadow-lg">
+<span class="material-symbols-outlined">smart_toy</span>
+</div>
+<div>
+<h2 class="text-headline-md font-headline-md text-primary">Copilot</h2>
+<p class="text-caption text-on-surface-variant font-body-sm">Gemma Intelligence</p>
+</div>
+</div>
+<!-- Chat Container -->
+<div class="flex-1 flex flex-col gap-6 overflow-y-auto custom-scroll mb-6 pr-1">
+<!-- Gemma Greeting / Alert -->
+<div class="agentic-glow glass-panel rounded-xl p-4 border border-primary/20 animate-in slide-in-from-right duration-300">
+<div class="flex items-center gap-2 mb-2">
+<span class="text-label-mono font-label-mono text-[10px] text-primary">GEMMA V2.5</span>
+<span class="w-2 h-2 rounded-full bg-error animate-pulse"></span>
+</div>
+<p class="text-body-sm text-on-surface mb-4">
+                Alert detected: <span class="font-bold text-error">App B Conversion Rate</span> has breached the 3% baseline. Should I audit the past paywall performance and suggest a remediation strategy?
+            </p>
+<button class="w-full py-2 shimmer-btn text-white rounded-lg text-body-sm font-bold shadow-md transition-transform hover:scale-[1.02] active:scale-[0.98]">
+                Yes, audit App B
+            </button>
+</div>
+<!-- Previous Chat Bubbles -->
+<div class="flex justify-end">
+<div class="bg-surface-container rounded-2xl rounded-tr-none px-4 py-2 max-w-[85%]">
+<p class="text-body-sm text-on-surface">What is the overall fleet revenue today?</p>
+</div>
+</div>
+<div class="flex justify-start">
+<div class="bg-white border border-outline-variant rounded-2xl rounded-tl-none px-4 py-2 max-w-[85%] shadow-sm">
+<p class="text-body-sm text-on-surface">Total daily revenue is currently <span class="font-bold">$14.2k</span>, trending up by 4.2% since yesterday.</p>
+</div>
+</div>
+</div>
+<!-- RAG Status Log Area -->
+<div class="mb-4">
+<div class="flex items-center gap-2 mb-2 text-label-mono font-label-mono text-[10px] text-on-surface-variant uppercase tracking-wider">
+<span class="material-symbols-outlined text-[14px]">terminal</span> Context Logs
+        </div>
+<div class="bg-inverse-surface p-3 rounded-lg font-label-mono text-[10px] text-success-emerald space-y-1 h-24 overflow-hidden">
+<div class="opacity-100">&gt; fetching_asset_context: fitness_app</div>
+<div class="opacity-80">&gt; analyzing_variation_delta: V3_vs_V2</div>
+<div class="opacity-60">&gt; cross_referencing_market_benchmarks</div>
+<div class="opacity-40">&gt; identified_friction_point: checkout_cta</div>
+<div class="opacity-20">&gt; waiting_for_user_approval...</div>
+</div>
+</div>
+<!-- Conversational Input -->
+<div class="relative">
+<input class="w-full bg-surface border border-outline-variant rounded-full py-3 pl-4 pr-12 text-body-sm focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-all" placeholder="Ask Gemma anything..." type="text"/>
+<button class="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 bg-primary text-white rounded-full flex items-center justify-center hover:opacity-90">
+<span class="material-symbols-outlined text-[20px]">send</span>
+</button>
+</div>
+</aside>
+<script>
+    // Micro-interactions and simple animations
+    document.addEventListener('DOMContentLoaded', () => {
+        const buttons = document.querySelectorAll('button');
+        buttons.forEach(btn => {
+            btn.addEventListener('mousedown', () => {
+                btn.style.transform = 'scale(0.95)';
+            });
+            btn.addEventListener('mouseup', () => {
+                btn.style.transform = btn.classList.contains('scale-105') ? 'scale(1.05)' : 'scale(1)';
+            });
+        });
+    });
+</script>
+</body></html>

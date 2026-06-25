@@ -1,0 +1,58 @@
+services:
+  apo-telemetry-analytics:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: apo-telemetry-analytics
+    ports:
+      - "${TELEMETRY_ANALYTICS_PORT:-4003}:${TELEMETRY_ANALYTICS_PORT:-4003}"
+    volumes:
+      - .:/app
+    environment:
+      DATABASE_URL: "postgres://${DATABASE_USER:-postgres}:${DATABASE_PASSWORD:-password}@apo-postgres:5432/${DATABASE_NAME:-apo_telemetry}"
+      PORT: "${TELEMETRY_ANALYTICS_PORT:-4003}"
+      TICK_INTERVAL_MS: "${TICK_INTERVAL_MS:-100}"
+      NODE_ENV: production
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://alloy:4317"
+      SERVICE_NAME: "telemetry-analytics"
+    depends_on:
+      apo-postgres:
+        condition: service_healthy
+
+  apo-postgres:
+    image: postgres:17-alpine
+    container_name: apo-postgres
+    ports:
+      - "${DATABASE_PORT:-5436}:5432"
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME:-apo_telemetry}
+      POSTGRES_USER: ${DATABASE_USER:-postgres}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-password}
+    volumes:
+      - apo-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DATABASE_USER:-postgres} -d ${DATABASE_NAME:-apo_telemetry}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  drizzle-studio-telemetry:
+    image: node:24-alpine
+    container_name: apo-drizzle-studio-telemetry
+    user: root
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "4983:4983"
+    command:
+      - sh
+      - -c
+      - "npm rebuild esbuild 2>/dev/null && ./node_modules/.bin/drizzle-kit studio --port 4983 --host 0.0.0.0 --verbose"
+    environment:
+      DATABASE_URL: "postgres://postgres:password@apo-postgres:5432/apo_telemetry"
+    depends_on:
+      apo-postgres:
+        condition: service_healthy
+
+volumes:
+  apo-postgres-data:

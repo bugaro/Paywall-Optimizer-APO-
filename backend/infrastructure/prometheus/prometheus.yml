@@ -1,0 +1,16 @@
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'apo-telemetry-analytics'
+    static_configs:
+      - targets: ['apo-telemetry-analytics:4003']
+
+  - job_name: 'copilot-bridge'
+    static_configs:
+      - targets: ['copilot-bridge:4005']
+
+  - job_name: 'mastra-ai'
+    static_configs:
+      - targets: ['apo-mastra-ai:4006']
+

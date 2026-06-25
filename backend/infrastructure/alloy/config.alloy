@@ -1,0 +1,204 @@
+// =============================================================================
+// SECTION 1: DOCKER LOG COLLECTION (all containers via Docker socket)
+// =============================================================================
+
+discovery.docker "docker" {
+	host             = "unix:///var/run/docker.sock"
+	refresh_interval = "5s"
+}
+
+discovery.relabel "docker" {
+	targets = discovery.docker.docker.targets
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/?(.*)"
+		target_label  = "container"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_name"]
+		regex         = "/?(.*)"
+		target_label  = "job"
+	}
+
+	rule {
+		source_labels = ["__meta_docker_container_label_com_docker_compose_service"]
+		target_label  = "service"
+	}
+
+	// NOTE: Do NOT use labelkeep here — loki.source.docker needs __meta_docker_container_id
+	// internally to tail container logs. Stripping meta labels with labelkeep causes
+	// loki.source.docker to discover zero containers. The meta labels (__meta_*) are
+	// automatically stripped by Alloy before they reach Loki as index labels.
+}
+
+loki.source.docker "docker" {
+	host             = "unix:///var/run/docker.sock"
+	targets          = discovery.relabel.docker.output
+	forward_to       = [loki.process.docker.receiver]
+}
+
+loki.process "docker" {
+	forward_to = [loki.write.default.receiver]
+
+	// NOTE: loki.source.docker on macOS Docker Desktop delivers raw log lines
+	// (not Docker JSON-wrapped), so no unwrapping stage is needed here.
+	// The entry is already the plain log text as written by the container.
+
+	// 1. Extract structured fields from JSON-logging services
+	stage.match {
+		pipeline_name = "json_services"
+		selector      = "{container=~\"apo-telemetry-analytics|apo-mastra-ai|apo-copilot-bridge\"}"
+		stage.json {
+			expressions = {
+				level         = "level",
+				correlationId = "correlationId",
+				traceId       = "traceId",
+				requestId     = "requestId",
+				appId         = "appId",
+				agentId       = "agentId",
+			}
+		}
+	}
+
+	// 2. Extract fields from logfmt-style services
+	stage.match {
+		pipeline_name = "logfmt_services"
+		selector      = "{container!~\"apo-telemetry-analytics|apo-mastra-ai|apo-copilot-bridge|apo-postgres\"}"
+		stage.logfmt {
+			mapping = {
+				level         = "level",
+				correlationId = "correlationId",
+			}
+		}
+	}
+
+	// 3. Normalize values to avoid empty label values
+	stage.template {
+		source   = "level"
+		template = "{{ if .Value }}{{ .Value }}{{ else }}unknown{{ end }}"
+	}
+	stage.template {
+		source   = "agentId"
+		template = "{{ if .Value }}{{ .Value }}{{ else }}unknown{{ end }}"
+	}
+
+	// 4. Promote only low-cardinality fields to Loki index labels.
+	// NOTE: traceId is high-cardinality and must NOT be a label — use | json in queries instead.
+	stage.labels {
+		values = {
+			level   = "level",
+			agent   = "agentId",
+		}
+	}
+}
+
+// =============================================================================
+// SECTION 2: OTLP RECEIVER (OpenTelemetry traces and structured logs from apps)
+// =============================================================================
+
+otelcol.receiver.otlp "application_receiver" {
+	grpc {
+		endpoint = "0.0.0.0:4317"
+	}
+	http {
+		endpoint = "0.0.0.0:4318"
+	}
+	output {
+		traces = [otelcol.processor.batch.traces_batcher.input]
+		logs   = [otelcol.exporter.loki.otel_loki_converter.input]
+	}
+}
+
+// =============================================================================
+// SECTION 3: DISTRIBUTED TRACES PIPELINE (OTel Traces → stdout for now)
+// Comment out / replace the exporter target once Grafana Tempo is deployed.
+// =============================================================================
+
+otelcol.processor.batch "traces_batcher" {
+	send_batch_size     = 512
+	timeout             = "5s"
+	send_batch_max_size = 1024
+	output {
+		traces = [otelcol.exporter.debug.traces_debug.input]
+	}
+}
+
+// Debug exporter: logs span summaries to Alloy stdout.
+// Replace with otelcol.exporter.otlp "tempo_exporter" once Tempo is available.
+otelcol.exporter.debug "traces_debug" {
+	verbosity = "normal"
+}
+
+// =============================================================================
+// SECTION 4: STRUCTURED LOG PIPELINE (OTel Logs → Grafana Loki)
+// =============================================================================
+
+// Bridge: converts OTel log records into Loki-native log entries
+otelcol.exporter.loki "otel_loki_converter" {
+	forward_to = [loki.process.otel_logs.receiver]
+}
+
+loki.process "otel_logs" {
+	// Stage 1: Parse the JSON body of each OTel log record
+	// Fields with dots in their names (OTel attribute convention) are accessed
+	// with bracket notation to prevent the parser from treating dots as nested
+	// key separators, e.g. attributes["service.name"] instead of service.name
+	stage.json {
+		expressions = {
+			raw_body      = "body",
+			log_time      = "observed_time_unix_nano",
+			severity      = "severity",
+			service_name   = "resource.attributes.\"service.name\"",
+			agent_id       = "attributes.\"gen_ai.agent.id\"",
+			trace_id       = "attributes.traceId",
+			correlation_id = "attributes.correlationId",
+			app_id         = "attributes.appId",
+			is_secret      = "attributes.\"security.mask_pii\"",
+			error_msg      = "attributes.\"exception.message\"",
+		}
+	}
+
+	// Stage 2: Use the application-side event timestamp (not ingestion time)
+	// This ensures log entries appear at the correct time in Grafana dashboards.
+	stage.timestamp {
+		source = "log_time"
+		format = "UnixNano"
+	}
+
+	// Stage 3: Drop logs explicitly flagged as containing PII / sensitive data
+	stage.drop {
+		source = "is_secret"
+		value  = "true"
+	}
+
+	// Stage 4: Promote extracted fields to Loki index labels.
+	// IMPORTANT: Only low-cardinality fields should be labels.
+	// High-cardinality fields like traceId should be kept in the log body
+	// and searched with Loki's `| json` query operator, NOT as labels.
+	stage.labels {
+		values = {
+			service       = "service_name",
+			level         = "severity",
+			agent         = "agent_id",
+		}
+	}
+
+	// Stage 5: Output the clean message body instead of the full OTel JSON envelope
+	stage.output {
+		source = "raw_body"
+	}
+
+	forward_to = [loki.write.default.receiver]
+}
+
+// =============================================================================
+// SECTION 5: LOKI WRITE ENDPOINT
+// =============================================================================
+
+loki.write "default" {
+	endpoint {
+		url = "http://loki:3100/loki/api/v1/push"
+	}
+}
