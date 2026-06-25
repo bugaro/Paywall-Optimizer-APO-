@@ -14,7 +14,7 @@ APO acts as an autonomous growth manager: monitoring cohort telemetry across app
 
 ## UI & Functionality Demo
 
-Watch the [APO UI & Functionality Demo Video](media/video.mov) to see the system in action.
+Watch the [APO UI & Functionality Demo Video](https://drive.google.com/file/d/1DRmMnF5TtAe9NioTnF7R0j3YsHvDgWcH/view?usp=sharing) to see the system in action.
 
 ### Screenshots
 
