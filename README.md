@@ -36,11 +36,12 @@ graph TD
         Bridge[Copilot Gateway / apo-copilot-bridge]
         Mastra[Mastra AI Service / apo-mastra-ai]
         Ollama[Ollama Runtime / Qwen2.5]
+        MastraDB[(Vector DB / apo-mastra-db)]
     end
 
     subgraph Core [Core Domain Services]
         Telemetry[Telemetry & Analytics Engine / apo-telemetry-analytics]
-        DB[(PostgreSQL / apo-postgres)]
+        TelemetryDB[(Telemetry DB / apo-postgres)]
     end
 
     React -->|REST /metrics| Telemetry
@@ -48,8 +49,8 @@ graph TD
     Bridge -->|REST HTTP| Telemetry
     Bridge -->|Reasoning Engine / OpenAI Proxy| Mastra
     Mastra -->|Ollama API| Ollama
-    Mastra -->|Vector Search & Queries| DB
-    Telemetry -->|SQL via Drizzle ORM| DB
+    Mastra -->|Vector Search & Queries| MastraDB
+    Telemetry -->|SQL via Drizzle ORM| TelemetryDB
 ```
 
 For a comprehensive explanation of our design patterns and layers, see the [architecture.md](file:///Users/bugaro/projects/apo/backend/docs/architecture.md) specification.

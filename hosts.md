@@ -10,7 +10,7 @@ These services are defined in the Docker Compose configurations and run locally.
 | :--- | :--- | :--- | :--- | :--- |
 | **Telemetry & Analytics Engine** | `apo-telemetry-analytics` | `apo-telemetry-analytics:4003` | `http://localhost:4003` | Core data-reactive Hono/TypeScript microservice for paywall simulations, A/B test splits, and event stream aggregation. |
 | **Copilot Gateway (Bridge)** | `copilot-bridge` | `copilot-bridge:4005` | `http://localhost:4005` | Relays frontend/CopilotKit presentation layer requests to the backend and handles tool/agent execution orchestration. |
-| **PostgreSQL Database** | `apo-postgres` | `apo-postgres:5432` | `localhost:5432` (or `:5436`) | Relational database with pgvector support storing application, user cohort, and historical paywall mutation vector memory. |
+| **Telemetry PostgreSQL Database** | `apo-postgres` | `apo-postgres:5432` | `localhost:5432` (or `:5436`) | Relational database storing application setups, user cohorts, and telemetry events. |
 | **Mastra AI Service** | `apo-mastra-ai` | `apo-mastra-ai:4006` | `http://localhost:4006` | Vector similarity search retrieval, paywall layout mutation reasoning using RAG, and OpenAI-compatible Ollama proxy. |
 | **Mastra PostgreSQL Database** | `apo-mastra-db` | `apo-mastra-db:5432` | `localhost:5437` | Dedicated Postgres DB with pgvector support for Mastra RAG semantic vector memory. |
 | **Ollama Runtime** | `apo-ollama` | `ollama:11434` | `http://localhost:11434` | Runs local LLM inference engines (e.g., Qwen2.5:3b) for layout mutation generation. |
